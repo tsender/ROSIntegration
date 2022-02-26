@@ -31,6 +31,10 @@
 #include "messages/rosbridge_unadvertise_service_msg.h"
 #include "messages/rosbridge_unsubscribe_msg.h"
 
+#include "CoreMinimal.h"
+#include "WebSocketsModule.h" // Module definition
+#include "IWebSocket.h"       // Socket definition
+
 using json = rapidjson::Document;
 
 namespace rosbridge2cpp {
@@ -107,6 +111,15 @@ namespace rosbridge2cpp {
 		// All communications with the rosbridge server
 		// will be in BSON, instead of JSON
 		void enable_bson_mode() { bson_only_mode_ = true; }
+
+		TSharedPtr<IWebSocket> Socket;
+		void OnWebSocketConnected();
+
+		void OnWebSocketConnectionError(const FString& Error);
+
+		// void OnWebSocketClosed(int32 StatusCode, const FString& Reason, bool bWasClean);
+
+		// void OnWebSocketRawMessage(const void* Data, SIZE_T Size, SIZE_T BytesRemaining );
 
 	private:
 		// Callback function for the used ITransportLayer.

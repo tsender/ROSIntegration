@@ -44,7 +44,8 @@ public class ROSIntegration : ModuleRules
 			{
 				"Core",
 				"Sockets",
-				"Networking"
+				"Networking",
+				"WebSockets"
 				// ... add other public dependencies that you statically link with here ...
 			}
 		);
@@ -56,7 +57,8 @@ public class ROSIntegration : ModuleRules
 				"CoreUObject",
 				"Engine",
 				"Sockets",
-				"Networking"
+				"Networking",
+				"WebSockets"
 				// ... add private dependencies that you statically link with here ...
 			}
 		);
@@ -68,6 +70,8 @@ public class ROSIntegration : ModuleRules
 				// ... add any modules that your module loads dynamically here ...
 			}
 		);
+
+		AddEngineThirdPartyPrivateStaticDependencies(Target, "OpenSSL", "libWebSockets", "zlib");
 
 
 

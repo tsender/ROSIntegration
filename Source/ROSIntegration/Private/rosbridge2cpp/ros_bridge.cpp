@@ -3,6 +3,9 @@
 #include "ros_topic.h"
 #include <bson.h>
 
+#include "WebSocketsModule.h" // Module definition
+#include "IWebSocket.h"       // Socket definition
+
 namespace rosbridge2cpp {
 
 	static const std::chrono::seconds SendThreadFreezeTimeout = std::chrono::seconds(5);
@@ -301,6 +304,17 @@ namespace rosbridge2cpp {
 
 	bool ROSBridge::Init(std::string ip_addr, int port)
 	{
+		FString server_url = FString("ws://") + FString(ip_addr.c_str()) + FString::Printf(TEXT(":9090/"));
+		// server_url = FString("ws://141.212.178.51:8080/");
+		TMap<FString, FString> UpgradeHeaders;
+		// UpgradeHeaders.Add(FString("Upgrade"), FString("WebSocket"));
+		// UpgradeHeaders.Add(FString("Connection"), FString("Upgrade"));
+		Socket = FWebSocketsModule::Get().CreateWebSocket(server_url, TEXT("ws"), UpgradeHeaders);
+
+		Socket->OnConnected().AddRaw(this, &ROSBridge::OnWebSocketConnected);
+		Socket->OnConnectionError().AddRaw(this, &ROSBridge::OnWebSocketConnectionError);
+		Socket->Connect();
+		
 		if (bson_only_mode()) {
 			auto fun = [this](bson_t &bson) { IncomingMessageCallback(bson); };
 
@@ -439,5 +453,15 @@ namespace rosbridge2cpp {
 		}
 
 		return return_value;
+	}
+
+	void ROSBridge::OnWebSocketConnected()
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Connected to websocket!"));
+	}
+
+	void ROSBridge::OnWebSocketConnectionError(const FString& Error)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Error connecting to websocket: %s"), *Error);
 	}
 }
