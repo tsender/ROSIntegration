@@ -64,7 +64,7 @@ public:
 
 	~UROSIntegrationCore();
 
-	bool Init(FString ROSBridgeHost, int32 ROSBridgePort);
+	bool Init(FString ROSBridgeIP, int32 ROSBridgePort, FString ROSBridgePath);
 
 	bool IsHealthy() const;
 

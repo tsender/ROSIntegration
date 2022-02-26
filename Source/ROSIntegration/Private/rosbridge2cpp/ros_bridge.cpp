@@ -3,8 +3,9 @@
 #include "ros_topic.h"
 #include <bson.h>
 
-#include "WebSocketsModule.h" // Module definition
-#include "IWebSocket.h"       // Socket definition
+#include "ROSIntegrationCore.h"
+#include "WebSocketsModule.h"
+#include "IWebSocket.h"
 
 namespace rosbridge2cpp {
 
@@ -37,9 +38,90 @@ namespace rosbridge2cpp {
 		}
 	}
 
-	bool ROSBridge::SendMessage(std::string data) {
-		spinlock::scoped_lock_wait_for_short_task lock(transport_layer_access_mutex_);
-		return transport_layer_.SendMessage(data);
+	bool ROSBridge::Init(FString ip_addr, int port, FString path)
+	{
+		ws_server_url = FString::Printf(TEXT("ws://%s:%i%s"), *ip_addr, port, *path);
+		web_socket = FWebSocketsModule::Get().CreateWebSocket(ws_server_url, TEXT("ws"));
+
+		// Bind event delegates (gets called in the game thread)
+		web_socket->OnConnected().AddRaw(this, &ROSBridge::OnWebSocketConnected);
+		web_socket->OnConnectionError().AddRaw(this, &ROSBridge::OnWebSocketConnectionError);
+		web_socket->OnClosed().AddRaw(this, &ROSBridge::OnWebSocketClosed);
+		web_socket->OnRawMessage().AddRaw(this, &ROSBridge::OnWebSocketRawMessage);
+
+
+		web_socket->Connect();
+		
+		// if (bson_only_mode()) {
+		// 	auto fun = [this](bson_t &bson) { IncomingMessageCallback(bson); };
+
+		// 	transport_layer_.SetTransportMode(ITransportLayer::BSON);
+		// 	transport_layer_.RegisterIncomingMessageCallback(fun);
+		// }
+		// else {
+		// 	// JSON mode
+		// 	auto fun = [this](json &document) { IncomingMessageCallback(document); };
+		// 	transport_layer_.RegisterIncomingMessageCallback(fun);
+		// }
+
+		// run_publisher_queue_thread_ = true;
+		// publisher_queue_thread_ = std::thread(&ROSBridge::RunPublisherQueueThread, this);
+
+		return true; //transport_layer_.Init(ip_addr, port);
+	}
+
+	bool ROSBridge::IsHealthy() const
+	{
+		return ws_connected_to_server;
+		// return run_publisher_queue_thread_ &&
+		// 	(std::chrono::system_clock::now() - LastDataSendTime < SendThreadFreezeTimeout);
+	}
+
+	void ROSBridge::CloseWebSocket()
+	{
+		if (ws_connected_to_server) web_socket->Close();
+	}
+
+	void ROSBridge::OnWebSocketConnected()
+	{
+		ws_connected_to_server = true;
+		UE_LOG(LogROS, Display, TEXT("ROSBridge: Connected to the websocket server at %s"), *ws_server_url);
+	}
+
+	void ROSBridge::OnWebSocketConnectionError(const FString& Error)
+	{
+		ws_connected_to_server = false;
+		UE_LOG(LogROS, Error, TEXT("ROSBridge: Unable to connect to websocket server at %s. Returned error message: '%s'"), *ws_server_url, *Error);
+	}
+
+	void ROSBridge::OnWebSocketClosed(int32 StatusCode, const FString& Reason, bool bWasClean)
+	{
+		ws_connected_to_server = false;
+		if (bWasClean)
+		{
+			UE_LOG(LogROS, Display, TEXT("ROSBridge: Websocket closed cleanly with status code %i and reason: '%s'."), StatusCode, *Reason);
+		}
+		else
+		{
+			UE_LOG(LogROS, Display, TEXT("ROSBridge: Websocket closed uncleanly with status code %i and reason: '%s'."), StatusCode, *Reason);
+		}
+	}
+
+	void ROSBridge::OnWebSocketMessage(const FString& MessageString)
+	{
+		
+	}
+
+	void ROSBridge::OnWebSocketRawMessage(const void* Data, SIZE_T Size, SIZE_T BytesRemaining)
+	{
+
+	}
+
+	bool ROSBridge::SendMessage(std::string data) 
+	{
+		// spinlock::scoped_lock_wait_for_short_task lock(transport_layer_access_mutex_);
+		// return transport_layer_.SendMessage(data);
+		return true;
 	}
 
 	bool ROSBridge::SendMessage(json &data)
@@ -72,7 +154,9 @@ namespace rosbridge2cpp {
 
 	bool ROSBridge::SendMessage(ROSBridgeMsg &msg)
 	{
-		if (bson_only_mode()) {
+		return true;
+		if (bson_only_mode()) 
+		{
 			bson_t* message = bson_new();
 			msg.ToBSON(*message);
 			//size_t offset;
@@ -117,31 +201,31 @@ namespace rosbridge2cpp {
 	{
 		assert(bson_only_mode_); // queueing is not supported for json data
 
-		if (!run_publisher_queue_thread_)
-		{
-			return false;
-		}
+		// if (!run_publisher_queue_thread_)
+		// {
+		// 	return false;
+		// }
 
-		bson_t* message = bson_new();
-		msg.ToBSON(*message);
+		// bson_t* message = bson_new();
+		// msg.ToBSON(*message);
 
-		{
-			spinlock::scoped_lock_wait_for_short_task lock(change_publisher_queues_mutex_);
-			if (publisher_topics_.find(topic_name) == publisher_topics_.end())
-			{
-				publisher_topics_[topic_name] = publisher_queues_.size();
-				publisher_queues_.push_back(std::queue<bson_t*>());
-			}
+		// {
+		// 	spinlock::scoped_lock_wait_for_short_task lock(change_publisher_queues_mutex_);
+		// 	if (publisher_topics_.find(topic_name) == publisher_topics_.end())
+		// 	{
+		// 		publisher_topics_[topic_name] = publisher_queues_.size();
+		// 		publisher_queues_.push_back(std::queue<bson_t*>());
+		// 	}
 
-			auto& queue = publisher_queues_[publisher_topics_[topic_name]];
-			if (queue_size > 0 && queue.size() >= queue_size) // make space if necessary
-			{
-				bson_destroy(queue.front());
-				queue.pop();
-			}
+		// 	auto& queue = publisher_queues_[publisher_topics_[topic_name]];
+		// 	if (queue_size > 0 && queue.size() >= queue_size) // make space if necessary
+		// 	{
+		// 		bson_destroy(queue.front());
+		// 		queue.pop();
+		// 	}
 
-			queue.push(message);
-		}
+		// 	queue.push(message);
+		// }
 
 		return true;
 	}
@@ -302,39 +386,6 @@ namespace rosbridge2cpp {
 		}
 	}
 
-	bool ROSBridge::Init(std::string ip_addr, int port)
-	{
-		FString server_url = FString("ws://") + FString(ip_addr.c_str()) + FString::Printf(TEXT(":9090/rosbridge"));
-		Socket = FWebSocketsModule::Get().CreateWebSocket(server_url, TEXT("ws"));
-
-		Socket->OnConnected().AddRaw(this, &ROSBridge::OnWebSocketConnected);
-		Socket->OnConnectionError().AddRaw(this, &ROSBridge::OnWebSocketConnectionError);
-		Socket->Connect();
-		
-		if (bson_only_mode()) {
-			auto fun = [this](bson_t &bson) { IncomingMessageCallback(bson); };
-
-			transport_layer_.SetTransportMode(ITransportLayer::BSON);
-			transport_layer_.RegisterIncomingMessageCallback(fun);
-		}
-		else {
-			// JSON mode
-			auto fun = [this](json &document) { IncomingMessageCallback(document); };
-			transport_layer_.RegisterIncomingMessageCallback(fun);
-		}
-
-		run_publisher_queue_thread_ = true;
-		publisher_queue_thread_ = std::thread(&ROSBridge::RunPublisherQueueThread, this);
-
-		return transport_layer_.Init(ip_addr, port);
-	}
-
-	bool ROSBridge::IsHealthy() const
-	{
-		return run_publisher_queue_thread_ &&
-			(std::chrono::system_clock::now() - LastDataSendTime < SendThreadFreezeTimeout);
-	}
-
 	void ROSBridge::RegisterTopicCallback(std::string topic_name, ROSCallbackHandle<FunVrROSPublishMsg>& callback_handle)
 	{
 		spinlock::scoped_lock_wait_for_short_task lock(change_topics_mutex_);
@@ -386,6 +437,7 @@ namespace rosbridge2cpp {
 		int num_retries_left = 10;
 		float sleep_duration = 0.2f;
 
+		return 0;
 		while (run_publisher_queue_thread_)
 		{
 			LastDataSendTime = std::chrono::system_clock::now();
@@ -449,15 +501,5 @@ namespace rosbridge2cpp {
 		}
 
 		return return_value;
-	}
-
-	void ROSBridge::OnWebSocketConnected()
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Connected to websocket!"));
-	}
-
-	void ROSBridge::OnWebSocketConnectionError(const FString& Error)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Error connecting to websocket: %s"), *Error);
 	}
 }

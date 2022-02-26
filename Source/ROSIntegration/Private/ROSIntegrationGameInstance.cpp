@@ -47,7 +47,7 @@ void UROSIntegrationGameInstance::Init()
 		}
 
 		ROSIntegrationCore = NewObject<UROSIntegrationCore>(UROSIntegrationCore::StaticClass()); // ORIGINAL 
-		bIsConnected = ROSIntegrationCore->Init(ROSBridgeServerHost, ROSBridgeServerPort);
+		bIsConnected = ROSIntegrationCore->Init(ROSBridgeServerIP, ROSBridgeServerPort, ROSBridgeServerPath);
 
 		if (!bTimerSet)
 		{
@@ -70,7 +70,7 @@ void UROSIntegrationGameInstance::Init()
 		}
 		else if (!bReconnect)
 		{
-			UE_LOG(LogROS, Error, TEXT("Failed to connect to server %s:%u. Please make sure that your rosbridge is running."), *ROSBridgeServerHost, ROSBridgeServerPort);
+			UE_LOG(LogROS, Error, TEXT("Failed to connect to server %s:%u. Please make sure that your rosbridge is running."), *ROSBridgeServerIP, ROSBridgeServerPort);
 		}
 
 		if (bSimulateTime)
@@ -105,7 +105,7 @@ void UROSIntegrationGameInstance::CheckROSBridgeHealth()
 
 	if (bIsConnected)
 	{
-		UE_LOG(LogROS, Error, TEXT("Connection to rosbridge %s:%u was interrupted."), *ROSBridgeServerHost, ROSBridgeServerPort);
+		UE_LOG(LogROS, Error, TEXT("Connection to rosbridge %s:%u was interrupted."), *ROSBridgeServerIP, ROSBridgeServerPort);
 	}
 
 	// reconnect again
@@ -148,7 +148,7 @@ void UROSIntegrationGameInstance::CheckROSBridgeHealth()
 		}
 	}
 
-	UE_LOG(LogROS, Display, TEXT("Successfully reconnected to rosbridge %s:%u."), *ROSBridgeServerHost, ROSBridgeServerPort);
+	UE_LOG(LogROS, Display, TEXT("Successfully reconnected to rosbridge %s:%u."), *ROSBridgeServerIP, ROSBridgeServerPort);
 }
 
 // N.B.: from log, first comes Shutdown() and then BeginDestroy()

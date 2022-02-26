@@ -22,11 +22,17 @@ public:
 	UPROPERTY()
 	UROSIntegrationCore* ROSIntegrationCore = nullptr;
 
+	// IP address of the ROS bridge websocket server
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ROS")
-	FString ROSBridgeServerHost = "127.0.0.1";
+	FString ROSBridgeServerIP = TEXT("127.0.0.1");
 
+	// Port number to access the ROS bridge websocket
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ROS")
 	int32 ROSBridgeServerPort = 9090;
+
+	// Path name for the ROS bridge websocket server (appears after the port number in the URI). Default is "/"
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ROS")
+	FString ROSBridgeServerPath = TEXT("/");
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ROS")
 	bool bConnectToROS = true;

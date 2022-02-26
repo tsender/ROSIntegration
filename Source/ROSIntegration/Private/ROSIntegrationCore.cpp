@@ -256,6 +256,7 @@ public:
 	~Impl()
 	{
 		UE_LOG(LogROS, Display, TEXT("UROSIntegrationCore ~Impl() "));
+		_Ros.CloseWebSocket();
 		//_World = nullptr;
 		_SpawnManager = nullptr;
 	}
@@ -275,7 +276,7 @@ public:
 		_SpawnManager = SpawnManager;
 	}
 
-	bool Init(FString ROSBridgeHost, int32 ROSBridgePort, bool bson_test_mode)
+	bool Init(FString ROSBridgeIP, int32 ROSBridgePort, FString ROSBridgePath, bool bson_test_mode)
 	{
 		_bson_test_mode = bson_test_mode;
 
@@ -283,7 +284,7 @@ public:
 			_Ros.enable_bson_mode();
 		}
 
-		bool ConnectionSuccessful = _Ros.Init(TCHAR_TO_UTF8(*ROSBridgeHost), ROSBridgePort);
+		bool ConnectionSuccessful = _Ros.Init(ROSBridgeIP, ROSBridgePort, ROSBridgePath);
 		if (!ConnectionSuccessful) {
 			return false;
 		}
@@ -369,7 +370,7 @@ UROSIntegrationCore::~UROSIntegrationCore()
 	UE_LOG(LogROS, Display, TEXT("UROSIntegrationCore ~UROSIntegrationCore() "));
 }
 
-bool UROSIntegrationCore::Init(FString ROSBridgeHost, int32 ROSBridgePort) {
+bool UROSIntegrationCore::Init(FString ROSBridgeIP, int32 ROSBridgePort, FString ROSBridgePath) {
 	UE_LOG(LogROS, Verbose, TEXT("CALLING INIT ON RIC IMPL()!"));
 
 	if(!_SpawnManager)	_SpawnManager = NewObject<USpawnManager>(USpawnManager::StaticClass()); // moved here from UImpl::Init()
@@ -381,7 +382,7 @@ bool UROSIntegrationCore::Init(FString ROSBridgeHost, int32 ROSBridgePort) {
 		_Implementation->Init();
 		_Implementation->SetImplSpawnManager(_SpawnManager);
 	}
-	return _Implementation->Get()->Init(ROSBridgeHost, ROSBridgePort, _bson_test_mode);
+	return _Implementation->Get()->Init(ROSBridgeIP, ROSBridgePort, ROSBridgePath, _bson_test_mode);
 }
 
 

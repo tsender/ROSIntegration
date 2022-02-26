@@ -55,9 +55,26 @@ namespace rosbridge2cpp {
 
 		// Init the underlying transport layer and everything thats required
 		// to initialized in this class.
-		bool Init(std::string ip_addr, int port);
+		bool Init(FString ip_addr, int port, FString path);
 
 		bool IsHealthy() const;
+
+		void CloseWebSocket();
+
+		// Delegate called when websocket is connected
+		void OnWebSocketConnected();
+
+		// Delegate called if unable to connect to the websocket
+		void OnWebSocketConnectionError(const FString& Error);
+
+		// Dlegate called when the websocket is closed
+		void OnWebSocketClosed(int32 StatusCode, const FString& Reason, bool bWasClean);
+
+		// Delegate called when the websocket receives a FString message
+		void OnWebSocketMessage(const FString& MessageString);
+
+		// Delegate called when the websocket client receives a raw message
+		void OnWebSocketRawMessage(const void* Data, SIZE_T Size, SIZE_T BytesRemaining);
 
 		// Send arbitrary string-data over the given TransportLayer
 		bool SendMessage(std::string data);
@@ -112,14 +129,9 @@ namespace rosbridge2cpp {
 		// will be in BSON, instead of JSON
 		void enable_bson_mode() { bson_only_mode_ = true; }
 
-		TSharedPtr<IWebSocket> Socket;
-		void OnWebSocketConnected();
-
-		void OnWebSocketConnectionError(const FString& Error);
-
-		// void OnWebSocketClosed(int32 StatusCode, const FString& Reason, bool bWasClean);
-
-		// void OnWebSocketRawMessage(const void* Data, SIZE_T Size, SIZE_T BytesRemaining );
+		TSharedPtr<IWebSocket> web_socket;
+		FString ws_server_url;
+		bool ws_connected_to_server = false;
 
 	private:
 		// Callback function for the used ITransportLayer.
