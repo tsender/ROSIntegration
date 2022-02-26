@@ -71,8 +71,6 @@ public class ROSIntegration : ModuleRules
 			}
 		);
 
-		AddEngineThirdPartyPrivateStaticDependencies(Target, "OpenSSL", "libWebSockets", "zlib");
-
 
 
 		if (Target.Platform == UnrealTargetPlatform.Win64)

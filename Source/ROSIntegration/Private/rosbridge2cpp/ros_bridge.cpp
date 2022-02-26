@@ -304,12 +304,8 @@ namespace rosbridge2cpp {
 
 	bool ROSBridge::Init(std::string ip_addr, int port)
 	{
-		FString server_url = FString("ws://") + FString(ip_addr.c_str()) + FString::Printf(TEXT(":9090/"));
-		// server_url = FString("ws://141.212.178.51:8080/");
-		TMap<FString, FString> UpgradeHeaders;
-		// UpgradeHeaders.Add(FString("Upgrade"), FString("WebSocket"));
-		// UpgradeHeaders.Add(FString("Connection"), FString("Upgrade"));
-		Socket = FWebSocketsModule::Get().CreateWebSocket(server_url, TEXT("ws"), UpgradeHeaders);
+		FString server_url = FString("ws://") + FString(ip_addr.c_str()) + FString::Printf(TEXT(":9090/rosbridge"));
+		Socket = FWebSocketsModule::Get().CreateWebSocket(server_url, TEXT("ws"));
 
 		Socket->OnConnected().AddRaw(this, &ROSBridge::OnWebSocketConnected);
 		Socket->OnConnectionError().AddRaw(this, &ROSBridge::OnWebSocketConnectionError);
