@@ -132,6 +132,7 @@ namespace rosbridge2cpp {
 		TSharedPtr<IWebSocket> web_socket;
 		FString ws_server_url;
 		bool ws_connected_to_server = false;
+		TArray<uint8> binary_recv_buffer;
 
 	private:
 		// Callback function for the used ITransportLayer.

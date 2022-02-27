@@ -2,6 +2,8 @@
 #include "ros_bridge.h"
 #include "ros_topic.h"
 #include <bson.h>
+#include "rapidjson/document.h"
+using json = rapidjson::Document;
 
 #include "ROSIntegrationCore.h"
 #include "WebSocketsModule.h"
@@ -14,6 +16,7 @@ namespace rosbridge2cpp {
 
 	ROSBridge::~ROSBridge()
 	{
+		CloseWebSocket();
 		run_publisher_queue_thread_ = false;
 		if (publisher_queue_thread_.joinable())
 		{
@@ -48,7 +51,6 @@ namespace rosbridge2cpp {
 		web_socket->OnConnectionError().AddRaw(this, &ROSBridge::OnWebSocketConnectionError);
 		web_socket->OnClosed().AddRaw(this, &ROSBridge::OnWebSocketClosed);
 		web_socket->OnRawMessage().AddRaw(this, &ROSBridge::OnWebSocketRawMessage);
-
 
 		web_socket->Connect();
 		
@@ -85,7 +87,7 @@ namespace rosbridge2cpp {
 	void ROSBridge::OnWebSocketConnected()
 	{
 		ws_connected_to_server = true;
-		UE_LOG(LogROS, Display, TEXT("ROSBridge: Connected to the websocket server at %s"), *ws_server_url);
+		UE_LOG(LogROS, Display, TEXT("ROSBridge: Connected to websocket server at %s"), *ws_server_url);
 	}
 
 	void ROSBridge::OnWebSocketConnectionError(const FString& Error)
@@ -109,18 +111,35 @@ namespace rosbridge2cpp {
 
 	void ROSBridge::OnWebSocketMessage(const FString& MessageString)
 	{
-		
+		json j;
+		j.Parse(TCHAR_TO_UTF8(*MessageString));
+		IncomingMessageCallback(j);
 	}
 
 	void ROSBridge::OnWebSocketRawMessage(const void* Data, SIZE_T Size, SIZE_T BytesRemaining)
-	{
+	{	
+		binary_recv_buffer.Append(static_cast<const uint8*>(Data), Size);
 
+		if (BytesRemaining == 0)
+		{
+			bson_t b;
+			if (!bson_init_static(&b, binary_recv_buffer.GetData(), binary_recv_buffer.Num())) 
+			{
+				UE_LOG(LogROS, Error, TEXT("ROSBridge: Error on BSON parse - Ignoring message"));
+			}
+			else
+			{
+				IncomingMessageCallback(b);
+			}
+			binary_recv_buffer.Empty();
+		}
 	}
 
 	bool ROSBridge::SendMessage(std::string data) 
 	{
 		// spinlock::scoped_lock_wait_for_short_task lock(transport_layer_access_mutex_);
 		// return transport_layer_.SendMessage(data);
+		web_socket->Send(FString(data.c_str()));
 		return true;
 	}
 
@@ -154,7 +173,7 @@ namespace rosbridge2cpp {
 
 	bool ROSBridge::SendMessage(ROSBridgeMsg &msg)
 	{
-		return true;
+		// return true;
 		if (bson_only_mode()) 
 		{
 			bson_t* message = bson_new();
@@ -163,6 +182,13 @@ namespace rosbridge2cpp {
 
 			const uint8_t *bson_data = bson_get_data(message);
 			uint32_t bson_size = message->len;
+			TArray<uint8> data;
+			data.Append(bson_data, bson_size);
+			UE_LOG(LogROS, Warning, TEXT("before: data[0] = %u"), data[0]);
+			bson_destroy(message);
+			UE_LOG(LogROS, Warning, TEXT("after: data[0] = %u"), data[0]);
+			return true;
+
 			spinlock::scoped_lock_wait_for_short_task lock(transport_layer_access_mutex_);
 			bool retval = transport_layer_.SendMessage(bson_data, bson_size);
 			bson_destroy(message);

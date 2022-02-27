@@ -256,7 +256,7 @@ public:
 	~Impl()
 	{
 		UE_LOG(LogROS, Display, TEXT("UROSIntegrationCore ~Impl() "));
-		_Ros.CloseWebSocket();
+		// _Ros.CloseWebSocket();
 		//_World = nullptr;
 		_SpawnManager = nullptr;
 	}
