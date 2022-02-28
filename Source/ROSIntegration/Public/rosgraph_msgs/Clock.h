@@ -2,6 +2,7 @@
 
 #include "ROSBaseMsg.h"
 #include "ROSTime.h"
+#include "builtin_interfaces/Time.h"
 
 namespace ROSMessages {
 	namespace rosgraph_msgs {
@@ -9,13 +10,13 @@ namespace ROSMessages {
 		public:
 			Clock() : Clock(FROSTime()) {}
 
-			Clock(FROSTime clock) {
+			Clock(FROSTime InClock) 
+			{
 				_MessageType = "rosgraph_msgs/Clock";
-				_Clock = clock;
+				clock = builtin_interfaces::Time(InClock);
 			}
 
-			//private:
-			FROSTime _Clock;
+			builtin_interfaces::Time clock;
 		};
 	}
 }

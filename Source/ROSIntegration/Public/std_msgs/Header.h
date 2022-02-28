@@ -2,22 +2,25 @@
 
 #include "ROSBaseMsg.h"
 #include "ROSTime.h"
-
+#include "builtin_interfaces/Time.h"
 
 namespace ROSMessages{
 	namespace std_msgs {
 		class Header: public FROSBaseMsg {
 		public:
-			Header() {
+			Header() 
+			{
 				_MessageType = "std_msgs/Header";
 			}
 
-			Header(uint32 seq, FROSTime time, FString frame_id) : seq(seq), time(time), frame_id(frame_id) {
+			Header(FROSTime Stamp, FString FrameID)  
+			{
 				_MessageType = "std_msgs/Header";
+				stamp = builtin_interfaces::Time(Stamp);
+				frame_id = FrameID;
 			}
 
-			uint32 seq;
-			FROSTime time;
+			builtin_interfaces::Time stamp;
 			FString frame_id;
 		};
 	}

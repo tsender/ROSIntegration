@@ -154,8 +154,7 @@ void UTFBroadcastComponent::TickComponent(float DeltaTime,
 
 	TSharedPtr<ROSMessages::tf2_msgs::TFMessage> TFMessage(new ROSMessages::tf2_msgs::TFMessage());
 	ROSMessages::geometry_msgs::TransformStamped TransformStamped;
-	TransformStamped.header.seq = 0;
-	TransformStamped.header.time = time;
+	TransformStamped.header.stamp = time;
 	TransformStamped.header.frame_id = CurrentParentFrameName;
 	TransformStamped.child_frame_id = CurrentThisFrameName;
 	TransformStamped.transform.translation.x = TranslationX;

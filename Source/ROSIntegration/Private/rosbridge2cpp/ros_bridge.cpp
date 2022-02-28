@@ -17,32 +17,13 @@ namespace rosbridge2cpp {
 	ROSBridge::~ROSBridge()
 	{
 		CloseWebSocket();
-		run_publisher_queue_thread_ = false;
-		if (publisher_queue_thread_.joinable())
-		{
-			bool waitForThread = (std::chrono::system_clock::now() - LastDataSendTime < SendThreadFreezeTimeout);
-			if (waitForThread)
-			{
-				publisher_queue_thread_.join();
-			}
-			else
-			{
-				publisher_queue_thread_.detach();
-			}
-		}
-
-		for (auto& queue : publisher_queues_)
-		{
-			while (queue.size())
-			{
-				bson_destroy(queue.front());
-				queue.pop();
-			}
-		}
+		binary_recv_buffer.Empty();
+		UE_LOG(LogROS, Display, TEXT("ROSBridge::~ROSBridge()"));
 	}
 
 	bool ROSBridge::Init(FString ip_addr, int port, FString path)
 	{
+		// Create websocket
 		ws_server_url = FString::Printf(TEXT("ws://%s:%i%s"), *ip_addr, port, *path);
 		web_socket = FWebSocketsModule::Get().CreateWebSocket(ws_server_url, TEXT("ws"));
 
@@ -53,30 +34,12 @@ namespace rosbridge2cpp {
 		web_socket->OnRawMessage().AddRaw(this, &ROSBridge::OnWebSocketRawMessage);
 
 		web_socket->Connect();
-		
-		// if (bson_only_mode()) {
-		// 	auto fun = [this](bson_t &bson) { IncomingMessageCallback(bson); };
-
-		// 	transport_layer_.SetTransportMode(ITransportLayer::BSON);
-		// 	transport_layer_.RegisterIncomingMessageCallback(fun);
-		// }
-		// else {
-		// 	// JSON mode
-		// 	auto fun = [this](json &document) { IncomingMessageCallback(document); };
-		// 	transport_layer_.RegisterIncomingMessageCallback(fun);
-		// }
-
-		// run_publisher_queue_thread_ = true;
-		// publisher_queue_thread_ = std::thread(&ROSBridge::RunPublisherQueueThread, this);
-
-		return true; //transport_layer_.Init(ip_addr, port);
+		return true;
 	}
 
 	bool ROSBridge::IsHealthy() const
 	{
 		return ws_connected_to_server;
-		// return run_publisher_queue_thread_ &&
-		// 	(std::chrono::system_clock::now() - LastDataSendTime < SendThreadFreezeTimeout);
 	}
 
 	void ROSBridge::CloseWebSocket()
@@ -120,140 +83,75 @@ namespace rosbridge2cpp {
 	{	
 		binary_recv_buffer.Append(static_cast<const uint8*>(Data), Size);
 
-		if (BytesRemaining == 0)
+		if (BytesRemaining == 0) // Full message has been received
 		{
 			bson_t b;
 			if (!bson_init_static(&b, binary_recv_buffer.GetData(), binary_recv_buffer.Num())) 
 			{
-				UE_LOG(LogROS, Error, TEXT("ROSBridge: Error on BSON parse - Ignoring message"));
+				UE_LOG(LogROS, Error, TEXT("ROSBridge: Error on BSON parse - Ignoring incoming message"));
 			}
 			else
 			{
 				IncomingMessageCallback(b);
 			}
-			binary_recv_buffer.Empty();
+			binary_recv_buffer.Empty(); // Empty buffer when done so we can start fresh for next incoming message
 		}
 	}
 
-	bool ROSBridge::SendMessage(std::string data) 
+	bool ROSBridge::SendMessage(std::string &data) 
 	{
-		// spinlock::scoped_lock_wait_for_short_task lock(transport_layer_access_mutex_);
-		// return transport_layer_.SendMessage(data);
-		web_socket->Send(FString(data.c_str()));
-		return true;
+		if(bson_only_mode())
+		{
+			bson_t bson;
+			bson_error_t error;
+			if (!bson_init_from_json(&bson, data.c_str(), -1, &error)) 
+			{
+				UE_LOG(LogROS, Error, TEXT("ROSBridge: bson_init_from_json() failed: %s"), error.message);
+				bson_destroy(&bson);
+				return false;
+			}
+
+			const uint8_t *bson_data = bson_get_data(&bson);
+			uint32_t bson_size = bson.len;
+			web_socket->Send(bson_data, bson_size, true); // Queue message on websocket SendQueue
+			bson_destroy(&bson);
+			return true;
+		}
+		else
+		{
+			web_socket->Send(FString(data.c_str()));
+			return true;
+		}
 	}
 
 	bool ROSBridge::SendMessage(json &data)
 	{
-		if (bson_only_mode()) {
-			// going from JSON to BSON
-			std::string str_repr = Helper::get_string_from_rapidjson(data);
-			std::cout << "[ROSBridge] serializing from JSON to BSON for: " << str_repr << std::endl;
-			// return transport_layer_.SendMessage(data,length);
-
-			bson_t bson;
-			bson_error_t error;
-			if (!bson_init_from_json(&bson, str_repr.c_str(), -1, &error)) {
-				printf("bson_init_from_json() failed: %s\n", error.message);
-				bson_destroy(&bson);
-				return false;
-			}
-			const uint8_t *bson_data = bson_get_data(&bson);
-			uint32_t bson_size = bson.len;
-			spinlock::scoped_lock_wait_for_short_task lock(transport_layer_access_mutex_);
-			bool retval = transport_layer_.SendMessage(bson_data, bson_size);
-			bson_destroy(&bson);
-			return retval;
-		}
-		else {
-			std::string str_repr = Helper::get_string_from_rapidjson(data);
-			return SendMessage(str_repr);
-		}
+		std::string str_repr = Helper::get_string_from_rapidjson(data);
+		return SendMessage(str_repr);
 	}
 
 	bool ROSBridge::SendMessage(ROSBridgeMsg &msg)
 	{
-		// return true;
 		if (bson_only_mode()) 
 		{
 			bson_t* message = bson_new();
 			msg.ToBSON(*message);
-			//size_t offset;
 
 			const uint8_t *bson_data = bson_get_data(message);
 			uint32_t bson_size = message->len;
-			TArray<uint8> data;
-			data.Append(bson_data, bson_size);
-			UE_LOG(LogROS, Warning, TEXT("before: data[0] = %u"), data[0]);
+			web_socket->Send(bson_data, bson_size, true); // Queue message on websocket SendQueue
 			bson_destroy(message);
-			UE_LOG(LogROS, Warning, TEXT("after: data[0] = %u"), data[0]);
 			return true;
-
-			spinlock::scoped_lock_wait_for_short_task lock(transport_layer_access_mutex_);
-			bool retval = transport_layer_.SendMessage(bson_data, bson_size);
-			bson_destroy(message);
-			return retval;
-
-			// // going from JSON to BSON
-			// std::string str_repr = Helper::get_string_from_rapidjson(data);
-			// std::cout << "[ROSBridge] serializing from JSON to BSON for: " << str_repr << std::endl;
-			// // return transport_layer_.SendMessage(data,length);
-			//
-			// bson_t bson;
-			// bson_error_t error;
-			// if (!bson_init_from_json(&bson, str_repr.c_str(), -1, &error)) {
-			//   printf("bson_init_from_json() failed: %s\n", error.message);
-			//   bson_destroy(&bson);
-			//   return false;
-			// }
-			// const uint8_t *bson_data = bson_get_data (&bson);
-			// uint32_t bson_size = bson.len;
-			// bool retval = transport_layer_.SendMessage(bson_data,bson_size);
-			// bson_destroy(&bson);
-			// std::cerr << "Not implemented" << std::endl;
-			// return false;
 		}
+		else
+		{
+			// Convert ROSBridgeMsg to JSON
+			json alloc;
+			json message = msg.ToJSON(alloc.GetAllocator());
 
-
-		// Convert ROSBridgeMsg to JSON
-		json alloc;
-		json message = msg.ToJSON(alloc.GetAllocator());
-
-		std::string str_repr = Helper::get_string_from_rapidjson(message);
-		return SendMessage(str_repr);
-	}
-
-	bool ROSBridge::QueueMessage(const std::string& topic_name, int queue_size, ROSBridgePublishMsg& msg)
-	{
-		assert(bson_only_mode_); // queueing is not supported for json data
-
-		// if (!run_publisher_queue_thread_)
-		// {
-		// 	return false;
-		// }
-
-		// bson_t* message = bson_new();
-		// msg.ToBSON(*message);
-
-		// {
-		// 	spinlock::scoped_lock_wait_for_short_task lock(change_publisher_queues_mutex_);
-		// 	if (publisher_topics_.find(topic_name) == publisher_topics_.end())
-		// 	{
-		// 		publisher_topics_[topic_name] = publisher_queues_.size();
-		// 		publisher_queues_.push_back(std::queue<bson_t*>());
-		// 	}
-
-		// 	auto& queue = publisher_queues_[publisher_topics_[topic_name]];
-		// 	if (queue_size > 0 && queue.size() >= queue_size) // make space if necessary
-		// 	{
-		// 		bson_destroy(queue.front());
-		// 		queue.pop();
-		// 	}
-
-		// 	queue.push(message);
-		// }
-
-		return true;
+			std::string str_repr = Helper::get_string_from_rapidjson(message);
+			return SendMessage(str_repr);
+		}
 	}
 
 	void ROSBridge::HandleIncomingPublishMessage(ROSBridgePublishMsg &data)
@@ -335,14 +233,8 @@ namespace rosbridge2cpp {
 		}
 	}
 
-	// void ROSBridge::HandleIncomingMessage(ROSBridgeMsg &msg) {}
-
 	void ROSBridge::IncomingMessageCallback(bson_t &bson)
 	{
-		//ROSBridgeMsg msg;
-		//msg.FromBSON(bson);
-		//HandleIncomingMessage(msg);
-
 		// Check the message type and dispatch the message properly
 		//
 		// Incoming Topic messages
@@ -455,77 +347,5 @@ namespace rosbridge2cpp {
 			}
 		}
 		return false;
-	}
-
-	int ROSBridge::RunPublisherQueueThread()
-	{
-		int return_value = 0;
-		int num_retries_left = 10;
-		float sleep_duration = 0.2f;
-
-		return 0;
-		while (run_publisher_queue_thread_)
-		{
-			LastDataSendTime = std::chrono::system_clock::now();
-
-			if (sleep_duration > 0.0f)
-			{
-				std::this_thread::sleep_for(std::chrono::microseconds((long long)(sleep_duration * 1000000.0)));
-				sleep_duration = 0.0f;
-			}
-
-			bson_t* msg;
-			{
-				spinlock::scoped_lock_wait_for_short_task lock(change_publisher_queues_mutex_);
-				current_publisher_queue_++;
-				if (current_publisher_queue_ >= publisher_queues_.size())
-				{
-					current_publisher_queue_ = 0;
-					// Enforce sleep once every topic was handled to allow
-					// synchronous ROSBridge calls (e.g. Subscribe, Advertise).
-					sleep_duration = 0.01f;
-
-					if (publisher_queues_.size() == 0)
-					{
-						sleep_duration = 0.1f;
-						continue;
-					}
-				}
-				auto& queue = publisher_queues_[current_publisher_queue_];
-				if (queue.size())
-				{
-					msg = queue.front();
-					queue.pop();
-				}
-				else
-				{
-					continue;
-				}
-			}
-
-			const uint8_t* bson_data = bson_get_data(msg);
-			uint32_t bson_size = msg->len;
-			{
-				spinlock::scoped_lock_wait_for_long_task lock(transport_layer_access_mutex_);
-				const bool success = transport_layer_.SendMessage(bson_data, bson_size);
-				bson_destroy(msg);
-				if (!success)
-				{
-					num_retries_left--;
-					sleep_duration = 0.2f;
-					if (num_retries_left <= 0) {
-						run_publisher_queue_thread_ = false;
-						return_value = 2;
-						std::cout << "[ROSBridge] Lost connection to ROSBridge!" << std::endl;
-					}
-				}
-				else
-				{
-					num_retries_left = 10;
-				}
-			}
-		}
-
-		return return_value;
 	}
 }

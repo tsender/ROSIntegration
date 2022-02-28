@@ -1,6 +1,5 @@
 #include "ROSIntegrationCore.h"
 #include "ROSIntegrationGameInstance.h"
-#include "rosbridge2cpp/TCPConnection.h"
 #include "rosbridge2cpp/ros_bridge.h"
 #include "rosbridge2cpp/ros_topic.h"
 
@@ -26,8 +25,7 @@ class UImpl::Impl
 public:
 	bool _bson_test_mode;
 
-	TCPConnection _Connection;
-	rosbridge2cpp::ROSBridge _Ros{ _Connection };
+	rosbridge2cpp::ROSBridge _Ros;
 
 
 	UWorld* _World = nullptr;
@@ -263,7 +261,7 @@ public:
 
 	bool IsHealthy() const
 	{
-		return _Connection.IsHealthy() && _Ros.IsHealthy();
+		return _Ros.IsHealthy();
 	}
 
 	void SetWorld(UWorld* World)

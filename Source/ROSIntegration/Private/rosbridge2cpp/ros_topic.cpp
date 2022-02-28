@@ -151,7 +151,8 @@ namespace rosbridge2cpp {
 		cmd.msg_json_ = message;
 		cmd.latch_ = latch_;
 
-		return ros_.QueueMessage(topic_name_, queue_size_, cmd);
+		return ros_.SendMessage(cmd);
+		// return ros_.QueueMessage(topic_name_, queue_size_, cmd); // Not sure if queueing makes sense with the websocket
 	}
 
 	bool ROSTopic::Publish(bson_t *message)
@@ -172,7 +173,8 @@ namespace rosbridge2cpp {
 		cmd.msg_bson_ = message;
 		cmd.latch_ = latch_;
 
-		return ros_.QueueMessage(topic_name_, queue_size_, cmd);
+		return ros_.SendMessage(cmd);
+		// return ros_.QueueMessage(topic_name_, queue_size_, cmd); // Not sure if queueing makes sense with the websocket
 	}
 
 	std::string ROSTopic::GeneratePublishID()
