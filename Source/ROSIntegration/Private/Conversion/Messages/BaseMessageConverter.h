@@ -64,13 +64,35 @@ public:
 		return value;
 	}
 
+	static int64 GetInt64FromBSON(FString Key, bson_t* msg, bool &KeyFound, bool LogOnErrors = true)
+	{
+		assert(msg != nullptr);
+
+		int64 value = rosbridge2cpp::Helper::get_int64_by_key(TCHAR_TO_UTF8(*Key), *msg, KeyFound);
+		if (!KeyFound && LogOnErrors) {
+			UE_LOG(LogROS, Error, TEXT("Key %s not present in data"), *Key);
+		}
+		return value;
+	}
+
 	static bool GetBoolFromBSON(FString Key, bson_t* msg, bool &KeyFound, bool LogOnErrors = true)
 	{
 		assert(msg != nullptr);
 
 		bool value = rosbridge2cpp::Helper::get_bool_by_key(TCHAR_TO_UTF8(*Key), *msg, KeyFound);
 		if (!KeyFound && LogOnErrors) {
-			UE_LOG(LogTemp, Error, TEXT("Key %s not present in data"), *Key);
+			UE_LOG(LogROS, Error, TEXT("Key %s not present in data"), *Key);
+		}
+		return value;
+	}
+
+	static const uint8* GetBinaryFromBSON(FString Key, bson_t* msg, bool &KeyFound, bool LogOnErrors = true)
+	{
+		assert(msg != nullptr);
+		uint32_t binary_data_length = 0; // Gets populated by get_binary_by_key()
+		const uint8* value = rosbridge2cpp::Helper::get_binary_by_key(TCHAR_TO_UTF8(*Key), *msg, binary_data_length, KeyFound);
+		if (!KeyFound && LogOnErrors) {
+			UE_LOG(LogROS, Error, TEXT("Key %s not present in data"), *Key);
 		}
 		return value;
 	}

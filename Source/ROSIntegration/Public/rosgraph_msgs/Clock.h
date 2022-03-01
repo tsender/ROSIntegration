@@ -10,10 +10,10 @@ namespace ROSMessages {
 		public:
 			Clock() : Clock(FROSTime()) {}
 
-			Clock(FROSTime InClock) 
+			Clock(FROSTime in_clock) 
 			{
 				_MessageType = "rosgraph_msgs/Clock";
-				clock = builtin_interfaces::Time(InClock);
+				clock = builtin_interfaces::Time(in_clock);
 			}
 
 			builtin_interfaces::Time clock;

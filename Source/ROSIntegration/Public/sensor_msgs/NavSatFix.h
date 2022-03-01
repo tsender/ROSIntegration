@@ -30,7 +30,7 @@ namespace ROSMessages {
 				TArray<double> position_covariance;
 
 				// Position Covariance Types
-				enum CovarianceType : uint8 {
+				static enum CovarianceType : uint8 {
 					COVARIANCE_TYPE_UNKNOWN = 0,
 					COVARIANCE_TYPE_APPROXIMATED = 1,
 					COVARIANCE_TYPE_DIAGONAL_KNOWN = 2,

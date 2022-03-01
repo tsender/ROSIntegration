@@ -12,7 +12,7 @@ namespace ROSMessages {
 				}
 
 				// Status Constants
-				enum Status : int8 {
+				static enum Status : int8 {
 					STATUS_NO_FIX = -1,	// Unable to fix position.
 					STATUS_FIX = 0,		// Unaugmented fix.
 					STATUS_SBAS_FIX = 1,	// With satellite-based augmentation.
@@ -24,7 +24,7 @@ namespace ROSMessages {
 				Status status;
 
 				// Service Constants
-				enum Service : uint16 {
+				static enum Service : uint16 {
 					SERVICE_GPS = 1,
 					SERVICE_GLONASS = 2,
 					SERVICE_COMPASS = 4, // Includes BeiDou
