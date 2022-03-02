@@ -23,10 +23,10 @@ namespace rosbridge2cpp {
 		UE_LOG(LogROS, Display, TEXT("ROSBridge::~ROSBridge()"));
 	}
 
-	bool ROSBridge::Init(FString ip_addr, int port, FString path_suffix)
+	bool ROSBridge::Init(FString ip_addr, int port, FString path)
 	{
 		// Create websocket
-		ws_server_url = FString::Printf(TEXT("ws://%s:%i%s"), *ip_addr, port, *path_suffix);
+		ws_server_url = FString::Printf(TEXT("ws://%s:%i%s"), *ip_addr, port, *path);
 		web_socket = FWebSocketsModule::Get().CreateWebSocket(ws_server_url, TEXT("ws"));
 
 		// Bind event delegates (gets called in the game thread)
@@ -58,6 +58,7 @@ namespace rosbridge2cpp {
 	void ROSBridge::OnWebSocketConnected()
 	{
 		connected_to_ws_server = true;
+		trying_to_connect_to_ws_server = false;
 		UE_LOG(LogROS, Display, TEXT("ROSBridge: Connected to websocket server at %s"), *ws_server_url);
 	}
 

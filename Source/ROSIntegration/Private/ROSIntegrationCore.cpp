@@ -368,7 +368,7 @@ UROSIntegrationCore::~UROSIntegrationCore()
 	UE_LOG(LogROS, Display, TEXT("UROSIntegrationCore ~UROSIntegrationCore() "));
 }
 
-bool UROSIntegrationCore::Init(FString ROSBridgeIP, int32 ROSBridgePort, FString ROSBridgePathSuffix) {
+bool UROSIntegrationCore::Init(FString ROSBridgeIP, int32 ROSBridgePort, FString ROSBridgePath) {
 	UE_LOG(LogROS, Verbose, TEXT("CALLING INIT ON RIC IMPL()!"));
 
 	if(!_SpawnManager)	_SpawnManager = NewObject<USpawnManager>(USpawnManager::StaticClass()); // moved here from UImpl::Init()
@@ -380,7 +380,7 @@ bool UROSIntegrationCore::Init(FString ROSBridgeIP, int32 ROSBridgePort, FString
 		_Implementation->Init();
 		_Implementation->SetImplSpawnManager(_SpawnManager);
 	}
-	return _Implementation->Get()->Init(ROSBridgeIP, ROSBridgePort, ROSBridgePathSuffix, _bson_test_mode);
+	return _Implementation->Get()->Init(ROSBridgeIP, ROSBridgePort, ROSBridgePath, _bson_test_mode);
 }
 
 
