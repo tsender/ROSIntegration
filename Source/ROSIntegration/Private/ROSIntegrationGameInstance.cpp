@@ -46,8 +46,9 @@ void UROSIntegrationGameInstance::Init()
 			oldRosCore->ConditionalBeginDestroy();
 		}
 
+		// TODO: Find a better way to wait for the websocket to connect. Currently ROSIntegrationCore->Init always returns true.
 		ROSIntegrationCore = NewObject<UROSIntegrationCore>(UROSIntegrationCore::StaticClass()); // ORIGINAL 
-		bIsConnected = ROSIntegrationCore->Init(ROSBridgeServerIP, ROSBridgeServerPort, ROSBridgeServerPath);
+		bIsConnected = ROSIntegrationCore->Init(ROSBridgeServerIP, ROSBridgeServerPort, ROSBridgeServerPathSuffix);
 
 		if (!bTimerSet)
 		{
@@ -105,7 +106,7 @@ void UROSIntegrationGameInstance::CheckROSBridgeHealth()
 
 	if (bIsConnected)
 	{
-		UE_LOG(LogROS, Error, TEXT("Connection to rosbridge %s:%u was interrupted."), *ROSBridgeServerIP, ROSBridgeServerPort);
+		UE_LOG(LogROS, Error, TEXT("Connection to rosbridge %s:%u/%s was interrupted."), *ROSBridgeServerIP, ROSBridgeServerPort, *ROSBridgeServerPathSuffix);
 	}
 
 	// reconnect again
@@ -147,8 +148,6 @@ void UROSIntegrationGameInstance::CheckROSBridgeHealth()
 			}
 		}
 	}
-
-	UE_LOG(LogROS, Display, TEXT("Successfully reconnected to rosbridge %s:%u."), *ROSBridgeServerIP, ROSBridgeServerPort);
 }
 
 // N.B.: from log, first comes Shutdown() and then BeginDestroy()

@@ -59,6 +59,8 @@ namespace rosbridge2cpp {
 
 		bool IsHealthy() const;
 
+		bool IsTryingToConnect() const;
+
 		void CloseWebSocket();
 
 		// Delegate called when websocket is connected
@@ -146,7 +148,8 @@ namespace rosbridge2cpp {
 
 		TSharedPtr<IWebSocket> web_socket;
 		FString ws_server_url;
-		bool ws_connected_to_server = false;
+		bool connected_to_ws_server = false;
+		bool trying_to_connect_to_ws_server = false;
 
 		// Buffer for storing the incoming binary data from the websocket
 		TArray<uint8> binary_recv_buffer;

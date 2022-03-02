@@ -1,14 +1,12 @@
 #pragma once
 
-#include <CoreMinimal.h>
+#include "CoreMinimal.h"
 
 #if PLATFORM_WINDOWS
 #include "Windows/WindowsHWrapper.h"
 #endif // PLATFORM_WINDOWS
 
 #include "ROSIntegrationCore.h"
-#include <UObject/ObjectMacros.h>
-#include <UObject/Object.h>
 #include "rosbridge2cpp/messages/rosbridge_publish_msg.h"
 #include <cstring>
 #include <functional>
@@ -20,9 +18,11 @@
 UCLASS()
 class ROSINTEGRATION_API UBaseMessageConverter: public UObject
 {
-	GENERATED_UCLASS_BODY()
+	GENERATED_BODY()
 
 public:
+	UBaseMessageConverter();
+	
 	UPROPERTY()
 	FString _MessageType;
 

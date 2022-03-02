@@ -18,13 +18,15 @@ namespace rosbridge2cpp {
 	{
 		CloseWebSocket();
 		binary_recv_buffer.Empty();
+		connected_to_ws_server = false;
+		trying_to_connect_to_ws_server = false;
 		UE_LOG(LogROS, Display, TEXT("ROSBridge::~ROSBridge()"));
 	}
 
-	bool ROSBridge::Init(FString ip_addr, int port, FString path)
+	bool ROSBridge::Init(FString ip_addr, int port, FString path_suffix)
 	{
 		// Create websocket
-		ws_server_url = FString::Printf(TEXT("ws://%s:%i%s"), *ip_addr, port, *path);
+		ws_server_url = FString::Printf(TEXT("ws://%s:%i%s"), *ip_addr, port, *path_suffix);
 		web_socket = FWebSocketsModule::Get().CreateWebSocket(ws_server_url, TEXT("ws"));
 
 		// Bind event delegates (gets called in the game thread)
@@ -34,34 +36,40 @@ namespace rosbridge2cpp {
 		web_socket->OnRawMessage().AddRaw(this, &ROSBridge::OnWebSocketRawMessage);
 
 		web_socket->Connect();
+		trying_to_connect_to_ws_server = true;
 		return true;
 	}
 
 	bool ROSBridge::IsHealthy() const
 	{
-		return ws_connected_to_server;
+		return connected_to_ws_server;
+	}
+
+	bool ROSBridge::IsTryingToConnect() const
+	{
+		return trying_to_connect_to_ws_server;
 	}
 
 	void ROSBridge::CloseWebSocket()
 	{
-		if (ws_connected_to_server) web_socket->Close();
+		if (connected_to_ws_server) web_socket->Close();
 	}
 
 	void ROSBridge::OnWebSocketConnected()
 	{
-		ws_connected_to_server = true;
+		connected_to_ws_server = true;
 		UE_LOG(LogROS, Display, TEXT("ROSBridge: Connected to websocket server at %s"), *ws_server_url);
 	}
 
 	void ROSBridge::OnWebSocketConnectionError(const FString& Error)
 	{
-		ws_connected_to_server = false;
+		connected_to_ws_server = false;
 		UE_LOG(LogROS, Error, TEXT("ROSBridge: Unable to connect to websocket server at %s. Returned error message: '%s'"), *ws_server_url, *Error);
 	}
 
 	void ROSBridge::OnWebSocketClosed(int32 StatusCode, const FString& Reason, bool bWasClean)
 	{
-		ws_connected_to_server = false;
+		connected_to_ws_server = false;
 		if (bWasClean)
 		{
 			UE_LOG(LogROS, Display, TEXT("ROSBridge: Websocket closed cleanly with status code %i and reason: '%s'."), StatusCode, *Reason);

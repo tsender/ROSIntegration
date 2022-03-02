@@ -30,9 +30,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ROS")
 	int32 ROSBridgeServerPort = 9090;
 
-	// Path name for the ROS bridge websocket server (appears after the port number in the URI). Default is "/"
+	// Path suffix for the ROS bridge websocket server (appears after the port number in the URI). Default is "/"
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ROS")
-	FString ROSBridgeServerPath = TEXT("/");
+	FString ROSBridgeServerPathSuffix = TEXT("/");
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ROS")
 	bool bConnectToROS = true;
