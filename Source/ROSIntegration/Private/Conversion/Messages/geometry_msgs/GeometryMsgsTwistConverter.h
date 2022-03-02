@@ -2,9 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "Conversion/Messages/BaseMessageConverter.h"
-#include "geometry_msgs/Twist.h"
 #include "Conversion/Messages/geometry_msgs/GeometryMsgsVector3Converter.h"
-
+#include "geometry_msgs/Twist.h"
 #include "GeometryMsgsTwistConverter.generated.h"
 
 
@@ -15,7 +14,6 @@ class ROSINTEGRATION_API UGeometryMsgsTwistConverter : public UBaseMessageConver
 
 public:
 	UGeometryMsgsTwistConverter();
-
 	virtual bool ConvertIncomingMessage(const ROSBridgePublishMsg* message, TSharedPtr<FROSBaseMsg> &BaseMsg);
 	virtual bool ConvertOutgoingMessage(TSharedPtr<FROSBaseMsg> BaseMsg, bson_t** message);
 

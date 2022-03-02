@@ -46,7 +46,7 @@ public:
 		BSON_APPEND_INT32(b, "height", msg->height);
 		BSON_APPEND_INT32(b, "width", msg->width);
 		BSON_APPEND_UTF8(b, "encoding", TCHAR_TO_UTF8(*msg->encoding));
-		BSON_APPEND_BINARY(b, "is_bigendian", BSON_SUBTYPE_BINARY, &msg->is_bigendian, 1);
+		BSON_APPEND_INT32(b, "is_bigendian", msg->is_bigendian);
 		BSON_APPEND_INT32(b, "step", msg->step);
 		BSON_APPEND_BINARY(b, "data", BSON_SUBTYPE_BINARY, msg->data, msg->height * msg->step);
 	}

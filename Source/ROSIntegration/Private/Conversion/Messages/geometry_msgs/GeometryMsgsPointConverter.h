@@ -3,7 +3,6 @@
 #include "CoreMinimal.h"
 #include "Conversion/Messages/BaseMessageConverter.h"
 #include "geometry_msgs/Point.h"
-
 #include "GeometryMsgsPointConverter.generated.h"
 
 
@@ -14,7 +13,6 @@ class ROSINTEGRATION_API UGeometryMsgsPointConverter : public UBaseMessageConver
 
 public:
 	UGeometryMsgsPointConverter();
-	
 	virtual bool ConvertIncomingMessage(const ROSBridgePublishMsg* message, TSharedPtr<FROSBaseMsg> &BaseMsg);
 	virtual bool ConvertOutgoingMessage(TSharedPtr<FROSBaseMsg> BaseMsg, bson_t** message);
 

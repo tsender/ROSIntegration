@@ -5,7 +5,6 @@
 #include "Conversion/Messages/std_msgs/StdMsgsHeaderConverter.h"
 #include "Conversion/Messages/geometry_msgs/GeometryMsgsTransformConverter.h"
 #include "geometry_msgs/TransformStamped.h"
-
 #include "GeometryMsgsTransformStampedConverter.generated.h"
 
 
@@ -16,7 +15,6 @@ class ROSINTEGRATION_API UGeometryMsgsTransformStampedConverter: public UBaseMes
 
 public:
     UGeometryMsgsTransformStampedConverter();
-
 	virtual bool ConvertIncomingMessage(const ROSBridgePublishMsg* message, TSharedPtr<FROSBaseMsg> &BaseMsg);
 	virtual bool ConvertOutgoingMessage(TSharedPtr<FROSBaseMsg> BaseMsg, bson_t** message);
 

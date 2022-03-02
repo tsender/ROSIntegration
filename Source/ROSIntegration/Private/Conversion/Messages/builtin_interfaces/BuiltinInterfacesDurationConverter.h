@@ -3,7 +3,6 @@
 #include "CoreMinimal.h"
 #include "Conversion/Messages/BaseMessageConverter.h"
 #include "builtin_interfaces/Duration.h"
-
 #include "BuiltinInterfacesDurationConverter.generated.h"
 
 

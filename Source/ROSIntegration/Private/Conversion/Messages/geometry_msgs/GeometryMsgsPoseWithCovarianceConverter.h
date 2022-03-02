@@ -4,7 +4,6 @@
 #include "Conversion/Messages/BaseMessageConverter.h"
 #include "Conversion/Messages/geometry_msgs/GeometryMsgsPoseConverter.h"
 #include "geometry_msgs/PoseWithCovariance.h"
-
 #include "GeometryMsgsPoseWithCovarianceConverter.generated.h"
 
 
@@ -15,7 +14,6 @@ class ROSINTEGRATION_API UGeometryMsgsPoseWithCovarianceConverter : public UBase
 
 public:
 	UGeometryMsgsPoseWithCovarianceConverter();
-
 	virtual bool ConvertIncomingMessage(const ROSBridgePublishMsg* message, TSharedPtr<FROSBaseMsg> &BaseMsg);
 	virtual bool ConvertOutgoingMessage(TSharedPtr<FROSBaseMsg> BaseMsg, bson_t** message);
 

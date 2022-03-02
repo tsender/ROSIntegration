@@ -13,10 +13,8 @@ class ROSINTEGRATION_API UGeometryMsgsVector3Converter: public UBaseMessageConve
 
 public:
 	UGeometryMsgsVector3Converter();
-	
 	virtual bool ConvertIncomingMessage(const ROSBridgePublishMsg* message, TSharedPtr<FROSBaseMsg> &BaseMsg);
 	virtual bool ConvertOutgoingMessage(TSharedPtr<FROSBaseMsg> BaseMsg, bson_t** message);
-
 
 	static bool _bson_extract_child_vector3(bson_t *b, FString key, ROSMessages::geometry_msgs::Vector3 *msg, bool LogOnErrors = true)
 	{

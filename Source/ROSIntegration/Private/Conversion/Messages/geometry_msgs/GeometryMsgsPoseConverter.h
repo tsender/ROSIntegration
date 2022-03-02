@@ -5,7 +5,6 @@
 #include "Conversion/Messages/geometry_msgs/GeometryMsgsPointConverter.h"
 #include "Conversion/Messages/geometry_msgs/GeometryMsgsQuaternionConverter.h"
 #include "geometry_msgs/Pose.h"
-
 #include "GeometryMsgsPoseConverter.generated.h"
 
 
@@ -16,7 +15,6 @@ class ROSINTEGRATION_API UGeometryMsgsPoseConverter : public UBaseMessageConvert
 
 public:
 	UGeometryMsgsPoseConverter();
-
 	virtual bool ConvertIncomingMessage(const ROSBridgePublishMsg* message, TSharedPtr<FROSBaseMsg> &BaseMsg);
 	virtual bool ConvertOutgoingMessage(TSharedPtr<FROSBaseMsg> BaseMsg, bson_t** message);
 

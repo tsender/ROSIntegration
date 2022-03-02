@@ -3,7 +3,6 @@
 #include "CoreMinimal.h"
 #include "Conversion/Messages/BaseMessageConverter.h"
 #include "geometry_msgs/Quaternion.h"
-
 #include "GeometryMsgsQuaternionConverter.generated.h"
 
 
@@ -14,10 +13,8 @@ class ROSINTEGRATION_API UGeometryMsgsQuaternionConverter: public UBaseMessageCo
 
 public:
 	UGeometryMsgsQuaternionConverter();
-
 	virtual bool ConvertIncomingMessage(const ROSBridgePublishMsg* message, TSharedPtr<FROSBaseMsg> &BaseMsg);
 	virtual bool ConvertOutgoingMessage(TSharedPtr<FROSBaseMsg> BaseMsg, bson_t** message);
-
 
 	static bool _bson_extract_child_quaternion(bson_t *b, FString key, ROSMessages::geometry_msgs::Quaternion *msg, bool LogOnErrors = true)
 	{

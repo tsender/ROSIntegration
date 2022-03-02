@@ -91,7 +91,8 @@ namespace rosbridge2cpp {
 		cmd.latch_ = latch_;
 		cmd.queue_size_ = queue_size_;
 
-		if (ros_.SendMessage(cmd)) {
+		if (ros_.SendMessage(cmd)) 
+		{
 			is_advertised_ = true;
 		}
 		return is_advertised_;
