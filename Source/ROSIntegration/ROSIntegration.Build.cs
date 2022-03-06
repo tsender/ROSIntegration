@@ -45,8 +45,8 @@ public class ROSIntegration : ModuleRules
 				"Core",
 				"Sockets",
 				"Networking",
-				"WebSockets",
 				"libWebSockets"
+				// "WebSockets",
 				// ... add other public dependencies that you statically link with here ...
 			}
 		);
@@ -59,8 +59,10 @@ public class ROSIntegration : ModuleRules
 				"Engine",
 				"Sockets",
 				"Networking",
-				"WebSockets",
-				"libWebSockets"
+				"HTTP",
+				"libWebSockets",
+				"zlib"
+				// "WebSockets",
 				// ... add private dependencies that you statically link with here ...
 			}
 		);

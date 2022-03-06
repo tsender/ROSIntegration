@@ -32,8 +32,8 @@
 #include "messages/rosbridge_unsubscribe_msg.h"
 
 #include "CoreMinimal.h"
-#include "WebSocketsModule.h" // Module definition
-#include "IWebSocket.h"       // Socket definition
+// #include "Lws/LwsWebSocketsManager.h"
+#include "Lws/IWebSocket.h"
 
 using json = rapidjson::Document;
 
@@ -47,9 +47,9 @@ namespace rosbridge2cpp {
 	class ROSBridge {
 
 	public:
-		ROSBridge() {}
+		ROSBridge();
 
-		ROSBridge(bool bson_only_mode) : bson_only_mode_(bson_only_mode) {}
+		// ROSBridge(bool bson_only_mode) : bson_only_mode_(bson_only_mode) {}
 
 		~ROSBridge();
 
@@ -146,6 +146,7 @@ namespace rosbridge2cpp {
 		// Handler Method for reply packet
 		void HandleIncomingServiceRequestMessage(ROSBridgeCallServiceMsg &data);
 
+		class FLwsWebSocketsManager* web_socket_manager;
 		TSharedPtr<IWebSocket> web_socket;
 		FString ws_server_url;
 		bool connected_to_ws_server = false;

@@ -6,17 +6,27 @@
 using json = rapidjson::Document;
 
 #include "ROSIntegrationCore.h"
-#include "WebSocketsModule.h"
-#include "IWebSocket.h"
+#include "Lws/LwsWebSocketsManager.h"
+#include "Lws/IWebSocket.h"
 
 namespace rosbridge2cpp {
 
 	static const std::chrono::seconds SendThreadFreezeTimeout = std::chrono::seconds(5);
 	unsigned long ROSCallbackHandle_id_counter = 1;
 
+	ROSBridge::ROSBridge()
+	{
+		const FString Protocols[] = {TEXT("ws"), TEXT("wss"), TEXT("v10.stomp"), TEXT("v11.stomp"), TEXT("v12.stomp"), TEXT("xmpp")};
+		web_socket_manager = FLwsWebSocketsManager::Get();
+		web_socket_manager->InitWebSockets(Protocols);
+	}
+
 	ROSBridge::~ROSBridge()
 	{
 		CloseWebSocket();
+		web_socket_manager->ShutdownWebSockets();
+		delete web_socket_manager;
+
 		binary_recv_buffer.Empty();
 		connected_to_ws_server = false;
 		trying_to_connect_to_ws_server = false;
@@ -27,7 +37,9 @@ namespace rosbridge2cpp {
 	{
 		// Create websocket
 		ws_server_url = FString::Printf(TEXT("ws://%s:%i%s"), *ip_addr, port, *path);
-		web_socket = FWebSocketsModule::Get().CreateWebSocket(ws_server_url, TEXT("ws"));
+		TArray<FString> Protocols;
+		Protocols.Add(TEXT("ws"));
+		web_socket = web_socket_manager->CreateWebSocket(ws_server_url, Protocols);
 
 		// Bind event delegates (gets called in the game thread)
 		web_socket->OnConnected().AddRaw(this, &ROSBridge::OnWebSocketConnected);
