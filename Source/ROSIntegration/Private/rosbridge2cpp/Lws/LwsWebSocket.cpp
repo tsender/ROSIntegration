@@ -196,6 +196,7 @@ void FLwsWebSocket::SendFromQueue()
 		{
 			SendQueue.Dequeue(CurrentBuffer);
 			delete CurrentBuffer;
+			// UE_LOG(LogROSWebSockets, Warning, TEXT("Sent msg from queue"));
 		}
 	}
 

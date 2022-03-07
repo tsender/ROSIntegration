@@ -50,11 +50,11 @@ FLwsWebSocketsManager::FLwsWebSocketsManager()
 	LwsContext(nullptr)
 	, Thread(nullptr)
 {
-	ThreadTargetFrameTimeInSeconds = 1.0f / 1000.0f; // 1000Hz
-	GConfig->GetDouble(TEXT("WebSockets.LibWebSockets"), TEXT("ThreadTargetFrameTimeInSeconds"), ThreadTargetFrameTimeInSeconds, GEngineIni);
+	ThreadTargetFrameTimeInSeconds = 1.0f / 100.0f; // 1000Hz
+	// GConfig->GetDouble(TEXT("WebSockets.LibWebSockets"), TEXT("ThreadTargetFrameTimeInSeconds"), ThreadTargetFrameTimeInSeconds, GEngineIni);
 
 	ThreadMinimumSleepTimeInSeconds = 0.0f;
-	GConfig->GetDouble(TEXT("WebSockets.LibWebSockets"), TEXT("ThreadMinimumSleepTimeInSeconds"), ThreadMinimumSleepTimeInSeconds, GEngineIni);
+	// GConfig->GetDouble(TEXT("WebSockets.LibWebSockets"), TEXT("ThreadMinimumSleepTimeInSeconds"), ThreadMinimumSleepTimeInSeconds, GEngineIni);
 }
 
 FLwsWebSocketsManager* FLwsWebSocketsManager::Get()
@@ -108,7 +108,7 @@ void FLwsWebSocketsManager::InitWebSockets(TArrayView<const FString> Protocols)
 	ContextInfo.max_http_header_data = 0;
 
 	int32 MaxHttpHeaderData = 1024 * 32;
-	GConfig->GetInt(TEXT("WebSockets.LibWebSockets"), TEXT("MaxHttpHeaderData"), MaxHttpHeaderData, GEngineIni);
+	// GConfig->GetInt(TEXT("WebSockets.LibWebSockets"), TEXT("MaxHttpHeaderData"), MaxHttpHeaderData, GEngineIni);
 	ContextInfo.max_http_header_data2 = MaxHttpHeaderData;
 	ContextInfo.pt_serv_buf_size = MaxHttpHeaderData;
 	
@@ -155,7 +155,7 @@ void FLwsWebSocketsManager::InitWebSockets(TArrayView<const FString> Protocols)
 	}
 	
 	int32 ThreadStackSize = 128 * 1024;
-	GConfig->GetInt(TEXT("WebSockets.LibWebSockets"), TEXT("ThreadStackSize"), ThreadStackSize, GEngineIni);
+	// GConfig->GetInt(TEXT("WebSockets.LibWebSockets"), TEXT("ThreadStackSize"), ThreadStackSize, GEngineIni);
 	Thread = FForkProcessHelper::CreateForkableThread(this, TEXT("LibwebsocketsThread"), 128 * 1024, TPri_Normal, FPlatformAffinity::GetNoAffinityMask());
 	if (!Thread)
 	{
