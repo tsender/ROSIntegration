@@ -32,7 +32,6 @@
 #include "messages/rosbridge_unsubscribe_msg.h"
 
 #include "CoreMinimal.h"
-// #include "Lws/LwsWebSocketsManager.h"
 #include "Lws/IWebSocket.h"
 
 using json = rapidjson::Document;
@@ -58,8 +57,6 @@ namespace rosbridge2cpp {
 		bool Init(FString ip_addr, int port, FString path);
 
 		bool IsHealthy() const;
-
-		bool IsTryingToConnect() const;
 
 		void CloseWebSocket();
 
@@ -147,10 +144,9 @@ namespace rosbridge2cpp {
 		void HandleIncomingServiceRequestMessage(ROSBridgeCallServiceMsg &data);
 
 		class FLwsWebSocketsManager* web_socket_manager;
-		TSharedPtr<IWebSocket> web_socket;
+		TSharedPtr<IWebSocket> web_socket; // Due to the rosbridge2cpp namespace, we cannot use forward declaration.
 		FString ws_server_url;
 		bool connected_to_ws_server = false;
-		bool trying_to_connect_to_ws_server = false;
 
 		// Buffer for storing the incoming binary data from the websocket
 		TArray<uint8> binary_recv_buffer;

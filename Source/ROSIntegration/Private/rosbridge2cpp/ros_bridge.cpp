@@ -16,8 +16,14 @@ namespace rosbridge2cpp {
 
 	ROSBridge::ROSBridge()
 	{
+		// Initialize websocket manager
 		const FString Protocols[] = {TEXT("ws"), TEXT("wss"), TEXT("v10.stomp"), TEXT("v11.stomp"), TEXT("v12.stomp"), TEXT("xmpp")};
 		web_socket_manager = FLwsWebSocketsManager::Get();
+		if (!web_socket_manager)
+		{
+			UE_LOG(LogROS, Error, TEXT("ROSBridge: Unable to get FLwsWebSocketsManager."));
+			return;
+		}
 		web_socket_manager->InitWebSockets(Protocols);
 	}
 
@@ -25,11 +31,10 @@ namespace rosbridge2cpp {
 	{
 		CloseWebSocket();
 		web_socket_manager->ShutdownWebSockets();
-		delete web_socket_manager;
+		web_socket_manager = nullptr;
 
 		binary_recv_buffer.Empty();
 		connected_to_ws_server = false;
-		trying_to_connect_to_ws_server = false;
 		UE_LOG(LogROS, Display, TEXT("ROSBridge::~ROSBridge()"));
 	}
 
@@ -39,6 +44,12 @@ namespace rosbridge2cpp {
 		ws_server_url = FString::Printf(TEXT("ws://%s:%i%s"), *ip_addr, port, *path);
 		TArray<FString> Protocols;
 		Protocols.Add(TEXT("ws"));
+		web_socket_manager = FLwsWebSocketsManager::Get();
+		if (!web_socket_manager)
+		{
+			UE_LOG(LogROS, Error, TEXT("ROSBridge: Unable to get FLwsWebSocketsManager. Cannot create websocket."));
+			return false;
+		}
 		web_socket = web_socket_manager->CreateWebSocket(ws_server_url, Protocols);
 
 		// Bind event delegates (gets called in the game thread)
@@ -48,18 +59,12 @@ namespace rosbridge2cpp {
 		web_socket->OnRawMessage().AddRaw(this, &ROSBridge::OnWebSocketRawMessage);
 
 		web_socket->Connect();
-		trying_to_connect_to_ws_server = true;
 		return true;
 	}
 
 	bool ROSBridge::IsHealthy() const
 	{
 		return connected_to_ws_server;
-	}
-
-	bool ROSBridge::IsTryingToConnect() const
-	{
-		return trying_to_connect_to_ws_server;
 	}
 
 	void ROSBridge::CloseWebSocket()
@@ -70,7 +75,6 @@ namespace rosbridge2cpp {
 	void ROSBridge::OnWebSocketConnected()
 	{
 		connected_to_ws_server = true;
-		trying_to_connect_to_ws_server = false;
 		UE_LOG(LogROS, Display, TEXT("ROSBridge: Connected to websocket server at %s"), *ws_server_url);
 	}
 
@@ -135,7 +139,7 @@ namespace rosbridge2cpp {
 			const uint8_t *bson_data = bson_get_data(&bson);
 			uint32_t bson_size = bson.len;
 			web_socket->Send(bson_data, bson_size, true); // Queue message on websocket SendQueue
-			bson_destroy(&bson);
+			bson_destroy(&bson); // This is okay to do since the bson_data gets copied to a TArray on the SendQueue
 			return true;
 		}
 		else
@@ -161,7 +165,7 @@ namespace rosbridge2cpp {
 			const uint8_t *bson_data = bson_get_data(message);
 			uint32_t bson_size = message->len;
 			web_socket->Send(bson_data, bson_size, true); // Queue message on websocket SendQueue
-			bson_destroy(message);
+			bson_destroy(message); // This is okay to do since the bson_data gets copied to a TArray on the SendQueue
 			return true;
 		}
 		else

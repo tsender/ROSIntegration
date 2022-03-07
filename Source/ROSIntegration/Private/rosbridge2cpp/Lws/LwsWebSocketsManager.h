@@ -1,8 +1,11 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+/**
+ * Comment from @tsender:
+ * This file was copied from Engine\Source\Runtime\Online\WebSockets\Private\Lws\
+ * A few modifications were made to improve runtime performance for the ROSIntegration plugin.
+ * Currently, SSL support has been commented out as I do not know how to work with this.
+ */
 
 #pragma once
-
-// #if WITH_WEBSOCKETS && WITH_LIBWEBSOCKETS
 
 #include "IWebSocketsManager.h"
 #include "LwsWebSocket.h"
@@ -109,5 +112,3 @@ private:
 	/** Minimum time to sleep in our thread's tick, even if the sleep makes us exceed our target frame time */
 	double ThreadMinimumSleepTimeInSeconds;
 };
-
-// #endif // WITH_WEBSOCKETS && WITH_LIBWEBSOCKETS

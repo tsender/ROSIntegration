@@ -1,11 +1,12 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+/**
+ * Comment from @tsender:
+ * This file was copied from Engine\Source\Runtime\Online\WebSockets\Private\Lws\
+ * A few modifications were made to improve runtime performance for the ROSIntegration plugin.
+ * Currently, SSL support has been commented out as I do not know how to work with this.
+ */
 
 #include "LwsWebSocket.h"
-
-// #if WITH_WEBSOCKETS && WITH_LIBWEBSOCKETS
-
 #include "LwsWebSocketsManager.h"
-// #include "WebSocketsModule.h"
 #include "WebSocketsLog.h"
 // #if WITH_SSL
 // #include "Ssl.h"
@@ -670,6 +671,8 @@ void FLwsWebSocket::ConnectInternal(struct lws_context &LwsContext)
 	FCStringAnsi::Strncpy(UrlPath + 1, TmpUrlPath, sizeof(UrlPath) - 2);
 	UrlPath[sizeof(UrlPath) - 1] = '\0';
 
+	UE_LOG(LogTemp, Warning, TEXT("parsed url: %s"), *FString(UrlPath));
+
 	int SslConnection = 0;
 
 	// Use SSL and require a valid cerver cert
@@ -741,5 +744,3 @@ void FLwsWebSocket::ConnectInternal(struct lws_context &LwsContext)
 		}
 	}
 }
-
-// #endif // #if WITH_WEBSOCKETS

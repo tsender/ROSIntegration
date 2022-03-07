@@ -1,10 +1,11 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+/**
+ * Comment from @tsender:
+ * This file was copied from Engine\Source\Runtime\Online\WebSockets\Private\Lws\
+ * A few modifications were made to improve runtime performance for the ROSIntegration plugin.
+ * Currently, SSL support has been commented out as I do not know how to work with this.
+ */
 
 #include "LwsWebSocketsManager.h"
-
-// #if WITH_WEBSOCKETS && WITH_LIBWEBSOCKETS
-
-// #include "WebSocketsModule.h"
 #include "HAL/RunnableThread.h"
 // #if WITH_SSL
 // #include "Ssl.h"
@@ -50,11 +51,9 @@ FLwsWebSocketsManager::FLwsWebSocketsManager()
 	LwsContext(nullptr)
 	, Thread(nullptr)
 {
-	ThreadTargetFrameTimeInSeconds = 1.0f / 100.0f; // 1000Hz
-	// GConfig->GetDouble(TEXT("WebSockets.LibWebSockets"), TEXT("ThreadTargetFrameTimeInSeconds"), ThreadTargetFrameTimeInSeconds, GEngineIni);
-
+	// Comment from @tsender: These are not used anymore
+	ThreadTargetFrameTimeInSeconds = 0.0001;
 	ThreadMinimumSleepTimeInSeconds = 0.0f;
-	// GConfig->GetDouble(TEXT("WebSockets.LibWebSockets"), TEXT("ThreadMinimumSleepTimeInSeconds"), ThreadMinimumSleepTimeInSeconds, GEngineIni);
 }
 
 FLwsWebSocketsManager* FLwsWebSocketsManager::Get()
@@ -226,13 +225,10 @@ uint32 FLwsWebSocketsManager::Run()
 {
 	while (!ExitRequest.GetValue())
 	{
-		double BeginTime = FPlatformTime::Seconds();
 		Tick();
-		double EndTime = FPlatformTime::Seconds();
-
-		double TotalTime = EndTime - BeginTime;
-		double SleepTime = FMath::Max(ThreadTargetFrameTimeInSeconds - TotalTime, ThreadMinimumSleepTimeInSeconds);
-		FPlatformProcess::SleepNoStats(SleepTime);
+		// Comment from @tsender: 
+		// The original code had a sleep function to achieve a target thread frame time which resulted in lower publish rates than desired.
+		// Removing the sleep function entirely eliminated this problem as we want all data to be processed immediately to avoid delay.
 	}
 
 	return 0;
@@ -432,5 +428,3 @@ bool FLwsWebSocketsManager::GameThreadTick(float DeltaTime)
 	}
 	return true;
 }
-
-// #endif // #if WITH_WEBSOCKETS

@@ -1,12 +1,15 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+/**
+ * Comment from @tsender:
+ * This file was copied from Engine\Source\Runtime\Online\WebSockets\Private\Lws\
+ * A few modifications were made to improve runtime performance for the ROSIntegration plugin.
+ * Currently, SSL support has been commented out as I do not know how to work with this.
+ */
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Containers/Ticker.h"
 #include "Containers/Queue.h"
-
-// #if WITH_WEBSOCKETS && WITH_LIBWEBSOCKETS
 
 #include "IWebSocket.h"
 
@@ -15,6 +18,8 @@
 #	include "Windows/AllowWindowsPlatformTypes.h"
 #endif
 
+// This is a workaround for the "UI" namespace clash between UE and libwebsockets. 
+// This workaround was found in Engine\Plugins\Experimental\WebSocketNetworking\Source\WebSocketNetworking\Private\WebSocket.cpp
 #define UI UI_ST
 THIRD_PARTY_INCLUDES_START
 #include "libwebsockets.h"
@@ -319,5 +324,3 @@ private:
 };
 
 typedef TSharedRef<FLwsWebSocket> FLwsWebSocketRef;
-
-// #endif

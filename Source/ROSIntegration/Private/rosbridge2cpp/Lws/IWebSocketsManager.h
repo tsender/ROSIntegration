@@ -1,4 +1,8 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+/**
+ * Comment from @tsender:
+ * This file was copied from Engine\Source\Runtime\Online\WebSockets\Public\
+ * A few modifications were made to improve runtime performance for the ROSIntegration plugin.
+ */
 
 #pragma once
 
