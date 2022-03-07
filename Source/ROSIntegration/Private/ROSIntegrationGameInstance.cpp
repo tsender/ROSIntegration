@@ -46,7 +46,8 @@ void UROSIntegrationGameInstance::Init()
 			oldRosCore->ConditionalBeginDestroy();
 		}
 
-		// TODO: Find a better way to wait for the websocket to connect. Currently ROSIntegrationCore->Init always returns true.
+		// Currently ROSIntegrationCore->Init always returns true if able to create the websocket. But this should not be an issue
+		// because the ROSIntegrationCore->IsHealthy() function properly indicates if the websocket is connected
 		ROSIntegrationCore = NewObject<UROSIntegrationCore>(UROSIntegrationCore::StaticClass()); // ORIGINAL 
 		bIsConnected = ROSIntegrationCore->Init(ROSBridgeServerIP, ROSBridgeServerPort, ROSBridgeServerPath);
 

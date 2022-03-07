@@ -25,13 +25,15 @@ namespace rosbridge2cpp {
 			return;
 		}
 		web_socket_manager->InitWebSockets(Protocols);
+		UE_LOG(LogROS, Display, TEXT("ROSBridge::ROSBridge()"));
 	}
 
 	ROSBridge::~ROSBridge()
 	{
 		CloseWebSocket();
 		web_socket_manager->ShutdownWebSockets();
-		web_socket_manager = nullptr;
+		web_socket.Reset();
+		// web_socket_manager = nullptr;
 
 		binary_recv_buffer.Empty();
 		connected_to_ws_server = false;
@@ -44,7 +46,7 @@ namespace rosbridge2cpp {
 		ws_server_url = FString::Printf(TEXT("ws://%s:%i%s"), *ip_addr, port, *path);
 		TArray<FString> Protocols;
 		Protocols.Add(TEXT("ws"));
-		web_socket_manager = FLwsWebSocketsManager::Get();
+
 		if (!web_socket_manager)
 		{
 			UE_LOG(LogROS, Error, TEXT("ROSBridge: Unable to get FLwsWebSocketsManager. Cannot create websocket."));

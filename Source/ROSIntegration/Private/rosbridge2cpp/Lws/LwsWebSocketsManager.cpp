@@ -21,6 +21,8 @@
 #include "Misc/Fork.h"
 #include "Stats/Stats.h"
 
+// Initialize Singleton
+// Gets set back to nullptr in ShutdownWebSockets() for proper runtime execution
 FLwsWebSocketsManager* FLwsWebSocketsManager::Singleton = nullptr;
 
 namespace {
@@ -51,16 +53,18 @@ FLwsWebSocketsManager::FLwsWebSocketsManager()
 	LwsContext(nullptr)
 	, Thread(nullptr)
 {
-	// Comment from @tsender: These are not used anymore
-	ThreadTargetFrameTimeInSeconds = 0.0001;
+	// Comment from @tsender: These are no longer used
+	ThreadTargetFrameTimeInSeconds = 0.001;
+	GConfig->GetDouble(TEXT("WebSockets.LibWebSockets"), TEXT("ThreadTargetFrameTimeInSeconds"), ThreadTargetFrameTimeInSeconds, GEngineIni);
 	ThreadMinimumSleepTimeInSeconds = 0.0f;
+	GConfig->GetDouble(TEXT("WebSockets.LibWebSockets"), TEXT("ThreadMinimumSleepTimeInSeconds"), ThreadMinimumSleepTimeInSeconds, GEngineIni);
 }
 
 FLwsWebSocketsManager* FLwsWebSocketsManager::Get()
 {
 	if (!Singleton)
 	{
-		Singleton = new FLwsWebSocketsManager();
+		Singleton = new FLwsWebSocketsManager;
 	}
 	return Singleton;
 }
@@ -107,7 +111,7 @@ void FLwsWebSocketsManager::InitWebSockets(TArrayView<const FString> Protocols)
 	ContextInfo.max_http_header_data = 0;
 
 	int32 MaxHttpHeaderData = 1024 * 32;
-	// GConfig->GetInt(TEXT("WebSockets.LibWebSockets"), TEXT("MaxHttpHeaderData"), MaxHttpHeaderData, GEngineIni);
+	GConfig->GetInt(TEXT("WebSockets.LibWebSockets"), TEXT("MaxHttpHeaderData"), MaxHttpHeaderData, GEngineIni);
 	ContextInfo.max_http_header_data2 = MaxHttpHeaderData;
 	ContextInfo.pt_serv_buf_size = MaxHttpHeaderData;
 	
@@ -154,7 +158,7 @@ void FLwsWebSocketsManager::InitWebSockets(TArrayView<const FString> Protocols)
 	}
 	
 	int32 ThreadStackSize = 128 * 1024;
-	// GConfig->GetInt(TEXT("WebSockets.LibWebSockets"), TEXT("ThreadStackSize"), ThreadStackSize, GEngineIni);
+	GConfig->GetInt(TEXT("WebSockets.LibWebSockets"), TEXT("ThreadStackSize"), ThreadStackSize, GEngineIni);
 	Thread = FForkProcessHelper::CreateForkableThread(this, TEXT("LibwebsocketsThread"), 128 * 1024, TPri_Normal, FPlatformAffinity::GetNoAffinityMask());
 	if (!Thread)
 	{
@@ -201,6 +205,10 @@ void FLwsWebSocketsManager::ShutdownWebSockets()
 	SocketsToStart.Empty();
 	SocketsToStop.Empty(); // TODO:  Should we trigger the OnClosed/OnConnectionError delegates?
 	Sockets.Empty();
+	
+	// Must delete Singleton upon shutdown so we can start back up again properly
+	delete Singleton;
+	Singleton = nullptr;
 
 // #if WITH_SSL
 // 	FSslModule& SslModule = FModuleManager::LoadModuleChecked<FSslModule>("SSL");
@@ -227,8 +235,9 @@ uint32 FLwsWebSocketsManager::Run()
 	{
 		Tick();
 		// Comment from @tsender: 
-		// The original code had a sleep function to achieve a target thread frame time which resulted in lower publish rates than desired.
-		// Removing the sleep function entirely eliminated this problem as we want all data to be processed immediately to avoid delay.
+		// The original code from Epic Games included a sleep function to achieve a target thread frame time.
+		// Doing so would resulted in less-than-desirable publish rates for the ROS topics. Removing the sleep call fixes the issue.
+		// We want the websocket to tick endlessly so we can send/receive data with minimal delay.
 	}
 
 	return 0;

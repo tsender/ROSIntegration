@@ -667,11 +667,18 @@ void FLwsWebSocket::ConnectInternal(struct lws_context &LwsContext)
 		}
 		return;
 	}
-	UrlPath[0] = '/';
-	FCStringAnsi::Strncpy(UrlPath + 1, TmpUrlPath, sizeof(UrlPath) - 2);
-	UrlPath[sizeof(UrlPath) - 1] = '\0';
 
-	UE_LOG(LogTemp, Warning, TEXT("parsed url: %s"), *FString(UrlPath));
+	// Determine if the provided URL needs a leading '/'
+	if (TmpUrlPath[0] == '/')
+	{
+		FCStringAnsi::Strncpy(UrlPath, TmpUrlPath, sizeof(UrlPath) - 1);
+	}
+	else
+	{
+		UrlPath[0] = '/';
+		FCStringAnsi::Strncpy(UrlPath + 1, TmpUrlPath, sizeof(UrlPath) - 2);
+	}
+	UrlPath[sizeof(UrlPath) - 1] = '\0';
 
 	int SslConnection = 0;
 
